@@ -52,7 +52,7 @@ class ModelParams(BaseModelParams):
     def __init__(self):
         BaseModelParams.__init__(self)
 
-        self.epoch = 50
+        self.epoch = 1
         self.margin = .1
         self.alpha = 5
         self.batch_size = 64
@@ -293,33 +293,54 @@ class AdvCrossModalSimple(BaseModel):
         top_k = self.model_params.top_k
         avg_precs = []
         all_precs = []
-        for k in top_k:
-            for i in range(len(test_txt_vecs_trans)):
-                query_label = test_labels[i]
+        # for k in top_k:
+        #     for i in range(len(test_txt_vecs_trans)):
+        #         query_label = test_labels[i]
 
-                # distances and sort by distances
-                wv = test_txt_vecs_trans[i]
-                diffs = test_img_feats_trans - wv
-                dists = np.linalg.norm(diffs, axis=1)
-                sorted_idx = np.argsort(dists)
+        #         # distances and sort by distances
+        #         wv = test_txt_vecs_trans[i]
+        #         diffs = test_img_feats_trans - wv
+        #         dists = np.linalg.norm(diffs, axis=1)
+        #         sorted_idx = np.argsort(dists)
 
-                #for each k do top-k
-                precs = []
-                for topk in range(1, k + 1):
-                    hits = 0
-                    top_k = sorted_idx[0 : topk]
-                    if np.sum(query_label) != test_labels[top_k[-1]]:
-                        continue
-                    for ii in top_k:
-                        retrieved_label = test_labels[ii]
-                        if np.sum(retrieved_label) == query_label:
-                            hits += 1
-                    precs.append(float(hits) / float(topk))
-                if len(precs) == 0:
-                    precs.append(0)
-                avg_precs.append(np.average(precs))
-            mean_avg_prec = np.mean(avg_precs)
-            all_precs.append(mean_avg_prec)
+        #         #for each k do top-k
+        #         precs = []
+        #         for topk in range(1, k + 1):
+        #             hits = 0
+        #             top_k = sorted_idx[0 : topk]
+        #             if np.sum(query_label) != test_labels[top_k[-1]]:
+        #                 continue
+        #             for ii in top_k:
+        #                 retrieved_label = test_labels[ii]
+        #                 if np.sum(retrieved_label) == query_label:
+        #                     hits += 1
+        #             precs.append(float(hits) / float(topk))
+        #         if len(precs) == 0:
+        #             precs.append(0)
+        #         avg_precs.append(np.average(precs))
+        #     mean_avg_prec = np.mean(avg_precs)
+        #     all_precs.append(mean_avg_prec)
+        for i in range(len(test_txt_vecs_trans)):
+            query_label = test_labels[i]
+
+            # distances and sort by distances
+            wv = test_txt_vecs_trans[i]
+            diffs = test_img_feats_trans - wv
+            dists = np.linalg.norm(diffs, axis=1)
+            sorted_idx = np.argsort(dists)
+
+            #for each k do top-k
+            precs = []
+            hits = 0
+            for j in range(top_k):
+                if test_labels[sorted_idx[j]] == query_label:
+                    hits += 1
+                    precs.append(hits/(j+1))
+            if len(precs) == 0:
+                precs.append(0)
+            avg_precs.append(np.average(precs))
+        mean_avg_prec = np.mean(avg_precs)
+        all_precs.append(mean_avg_prec)
         print('[Eval - txt2img] mAP: %f in %4.4fs' % (all_precs[0], (time.time() - start)))
         t2i = all_precs[0]
         #with open('./data/wikipedia_dataset/txt2img_all_precision.pkl', 'wb') as f:
@@ -330,37 +351,56 @@ class AdvCrossModalSimple(BaseModel):
         avg_precs = []
         all_precs = []
 
-        for k in top_k:        
-            for i in range(len(test_img_feats_trans)):
-                query_img_feat = test_img_feats_trans[i]
-                ground_truth_label = test_labels[i]
+        # for k in top_k:        
+        #     for i in range(len(test_img_feats_trans)):
+        #         query_img_feat = test_img_feats_trans[i]
+        #         ground_truth_label = test_labels[i]
 
-                # calculate distance and sort
-                diffs = test_txt_vecs_trans - query_img_feat
-                dists = np.linalg.norm(diffs, axis=1)
-                sorted_idx = np.argsort(dists)
+        #         # calculate distance and sort
+        #         diffs = test_txt_vecs_trans - query_img_feat
+        #         dists = np.linalg.norm(diffs, axis=1)
+        #         sorted_idx = np.argsort(dists)
 
-                # for each k in top-k
-                precs = []
-                for topk in range(1, k + 1):
-                    hits = 0
-                    top_k = sorted_idx[0 : topk]
-                    if np.sum(ground_truth_label) != test_labels[top_k[-1]]:
-                        continue
-                    for ii in top_k:
-                        retrieved_label = test_labels[ii]
-                        if np.sum(ground_truth_label) == retrieved_label:
-                            hits += 1
-                    precs.append(float(hits) / float(topk))
-                if len(precs) == 0:
-                    precs.append(0)
-                avg_precs.append(np.average(precs))
-            mean_avg_prec = np.mean(avg_precs)
-            all_precs.append(mean_avg_prec)            
+        #         # for each k in top-k
+        #         precs = []
+        #         for topk in range(1, k + 1):
+        #             hits = 0
+        #             top_k = sorted_idx[0 : topk]
+        #             if np.sum(ground_truth_label) != test_labels[top_k[-1]]:
+        #                 continue
+        #             for ii in top_k:
+        #                 retrieved_label = test_labels[ii]
+        #                 if np.sum(ground_truth_label) == retrieved_label:
+        #                     hits += 1
+        #             precs.append(float(hits) / float(topk))
+        #         if len(precs) == 0:
+        #             precs.append(0)
+        #         avg_precs.append(np.average(precs))
+        #     mean_avg_prec = np.mean(avg_precs)
+        #     all_precs.append(mean_avg_prec)            
+        for i in range(len(test_img_feats_trans)):
+            query_img_feat = test_img_feats_trans[i]
+            ground_truth_label = test_labels[i]
+
+            # calculate distance and sort
+            diffs = test_txt_vecs_trans - query_img_feat
+            dists = np.linalg.norm(diffs, axis=1)
+            sorted_idx = np.argsort(dists)
+
+            # for each k in top-k
+            precs = []
+            hits = 0
+            for j in range(top_k):
+                if test_labels[sorted_idx[j]] == ground_truth_label:
+                    hits += 1
+                    precs.append(hits/(j+1))
+            if len(precs) == 0:
+                precs.append(0)
+            avg_precs.append(np.average(precs))
+        mean_avg_prec = np.mean(avg_precs)
+        all_precs.append(mean_avg_prec)     
         print('[Eval - img2txt] mAP: %f in %4.4fs' % (all_precs[0], (time.time() - start)))
 
-        
-        
         #with open('./data/wikipedia_dataset/text_words_map.pkl', 'wb') as f:
         #    pickle.dump(all_precs, f, pickle.HIGHEST_PROTOCOL)
         with open('./data/wiki_shallow/text_words_map.pkl', 'wb') as f:
